@@ -10,7 +10,8 @@ class IndexController extends Zend_Controller_Action
 
     public function indexAction()
     {
-        // action body
+        $form = new Form_Upload;
+        $this->view->form = $form;
     }
 
 
