@@ -1,26 +1,26 @@
 <?php
 
-class Form_Upload extends Twitter_Bootstrap_Form_Horizontal
+class Form_Upload extends Zend_Form
 {
 
     public function init()
     {
         $this->setMethod('post');
-        $this->setIsArray(true);
-        $this->setElementsBelongTo('bootstrap');
 
-        $this->_addClassNames('well');
-        
-        $this->addElement('file', 'file', array(
-            'placeholder' => 'Upload'
-        ));
+        $firstFile = new Zend_Form_Element_File('firstFile');
+        $firstFile->setLabel('first_file')
+                ->addValidator('Extension', false, 'xls, xlsx');
 
-        $this->addElement('button', 'submit', array(
-            'label' => 'OK',
-            'type' => 'submit',
-            'buttonType' => 'success',
-            'icon' => 'ok',
-            'escape' => false
+        $secondFile = new Zend_Form_Element_File('secondFile');
+        $secondFile->setLabel('second_file')
+                ->addValidator('Extension', false, 'xls, xlsx');
+
+        $submit = new Zend_Form_Element_Submit('submit');
+
+        $this->addElements(array(
+            $firstFile,
+            $secondFile,
+            $submit,
         ));
     }
 
