@@ -14,17 +14,27 @@ class IndexController extends Zend_Controller_Action
         $this->view->form = $form;
         if ($this->getRequest()->isPost() && $form->isValid($this->getRequest()->getPost())) {
             $firstFileData = new Spreadsheet_Excel_Reader($form->firstFile->getFileName());
-//            $secondFileData = new Spreadsheet_Excel_Reader($form->secondFile->getFileName());
-            $sheets = $firstFileData->sheets[0];
+            $firstFileMembers = $this->_getMembers($firstFileData);
+            
+            $secondFileData = new Spreadsheet_Excel_Reader($form->secondFile->getFileName());
+            $secondFileMembers = $this->_getMembers($secondFileData);
+            /*
+             * TODO: _someFunctionToCompareFileMembers($firstFileMembers, $secondFileMembers)
+             */
+        }
+    }
+    
+    private function _getMembers($fileData)
+    {
+        $sheets = $fileData->sheets[0];
             $cells = $sheets['cells'];
-            $firstFileGrid = array();
+            $members = array();
             foreach ($cells as $cell) {
                 if (gettype($cell[1]) == 'integer') {
-                    array_push($firstFileGrid, $cell);
+                    array_push($members, $cell);
                 }
             }
-            throw new Exception(Zend_Debug::dump($firstFileGrid));
-        }
+            return $members;
     }
 
 }
