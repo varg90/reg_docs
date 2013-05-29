@@ -20,10 +20,10 @@ class IndexController extends Zend_Controller_Action
             $firstFileGrid = array();
             foreach ($cells as $cell) {
                 if (gettype($cell[1]) == 'integer') {
-                    array_merge($firstFileGrid, $cell);
-            throw new Exception(Zend_Debug::dump(key($cell)));
+                    array_push($firstFileGrid, $cell);
                 }
             }
+            throw new Exception(Zend_Debug::dump($firstFileGrid));
         }
     }
 
