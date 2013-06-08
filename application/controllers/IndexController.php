@@ -13,28 +13,28 @@ class IndexController extends Zend_Controller_Action
         $form = new Form_Upload;
         $this->view->form = $form;
         if ($this->getRequest()->isPost() && $form->isValid($this->getRequest()->getPost())) {
-            $firstFileData = new Spreadsheet_Excel_Reader($form->firstFile->getFileName());
+
+            $firstFileData = PHPExcel_IOFactory::load($form->firstFile->getFileName());
             $firstFileMembers = $this->_getMembers($firstFileData);
-            
-            $secondFileData = new Spreadsheet_Excel_Reader($form->secondFile->getFileName());
+
+            $secondFileData = PHPExcel_IOFactory::load($form->secondFile->getFileName());
             $secondFileMembers = $this->_getMembers($secondFileData);
             /*
              * TODO: _someFunctionToCompareFileMembers($firstFileMembers, $secondFileMembers)
              */
         }
     }
-    
-    private function _getMembers($fileData)
+
+    private function _getMembers(PHPExcel $fileData)
     {
-        $sheets = $fileData->sheets[0];
-            $cells = $sheets['cells'];
-            $members = array();
-            foreach ($cells as $cell) {
-                if (gettype($cell[1]) == 'integer') {
-                    array_push($members, $cell);
-                }
+        $rows = $fileData->getActiveSheet()->toArray();
+        $members = array();
+        foreach ($rows as $row) {
+            if (is_numeric($row[0])) {
+                    array_push($members, $row);
             }
-            return $members;
+        }
+        return $members;
     }
 
 }

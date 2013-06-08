@@ -6,6 +6,7 @@ class Form_Upload extends Zend_Form
     public function init()
     {
         $this->setMethod('post');
+        $this->setAttrib('enctype', 'multipart/form-data');
 
         $firstFile = new Zend_Form_Element_File('firstFile');
         $firstFile->setLabel('first_file')
