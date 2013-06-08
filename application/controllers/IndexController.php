@@ -90,10 +90,40 @@ class IndexController extends Zend_Controller_Action
                             $changedOriginalData[] = $firstFileMember;
                             $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО равны, ДР не совпадают';
                             $toKSA2Data[] = $firstFileMember;
-                            
+                            $firstFileMember[13] = 'Уточнить ДР';
+                            $toUFMSData[] = $firstFileMember;
                         }
                     } else {
-                        
+                        if ($firstBithday->format("U") == $secondBithday->format("U")) {
+                            $changedOriginalData[] = $firstFileMember;
+                            $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО не совпадают, ДР равны';
+                            $toKSA2Data[] = $firstFileMember;
+                            $firstFileMember[13] = 'Уточнить ФИО';
+                            $toUFMSData[] = $firstFileMember;
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U"))
+                                && ($firstBithday->format("d") == '01')
+                                && ($firstBithday->format("m") == '01')
+                                && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                            $firstFileMember[2] = $secondFileMember[2];
+                            $changedOriginalData[] = $firstFileMember;
+                            $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО не совпадают, ДР 01.01';
+                            $toKSA2Data[] = $firstFileMember;
+                            $firstFileMember[13] = 'Уточнить ФИО';
+                            $toUFMSData[] = $firstFileMember;
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U"))
+                                && ($secondBithday->format("d") == '01')
+                                && ($secondBithday->format("m") == '01')
+                                && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                            $changedOriginalData[] = $firstFileMember;
+                            $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО не совпадают, ДР 01.01';
+                            $toKSA2Data[] = $firstFileMember;
+                            $firstFileMember[13] = 'Уточнить ФИО';
+                            $toUFMSData[] = $firstFileMember;
+                        } else {
+                            $changedOriginalData[] = $firstFileMember;
+                            $firstFileMember[13] = 'Уточнить';
+                            $toUFMSData[] = $firstFileMember;
+                        }
                     }
                 } else if ($firstRegDate > $secondRegDate) {
                     if ($firstFullname == $secondFullname) {
@@ -110,11 +140,9 @@ class IndexController extends Zend_Controller_Action
                 }
             }
         }
-        $changedOriginalSheet->fromArray($changedOriginalData);
-        $objWriter = new PHPExcel_Writer_Excel5($changedOriginal);
+        $toUFMSSheet->fromArray($toUFMSData);
+        $objWriter = new PHPExcel_Writer_Excel5($toUFMS);
         $objWriter->save('C:\xampp\tmp\123.xls');
     }
-
-    //$start_date = date("Y-m-d H:i:s", strtotime("12/16/2012 02:53"));
 }
 
