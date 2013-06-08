@@ -45,25 +45,25 @@ class IndexController extends Zend_Controller_Action
         $changedOriginalSheet = $changedOriginal->getActiveSheet();
         $changedOriginalSheet->getColumnDimension('b')->setWidth('30');
         $changedOriginalData = array();
-        
+
         $toKSA2 = new PHPExcel();
         $toKSA2->setActiveSheetIndex(0);
         $toKSA2Sheet = $toKSA2->getActiveSheet();
         $toKSA2Data = array();
-        
+
         $toUFMS = new PHPExcel();
         $toUFMS->setActiveSheetIndex(0);
         $toUFMSSheet = $toUFMS->getActiveSheet();
         $toUFMSData = array();
-        
+
         foreach ($secondFileMembers as $secondFileMember) {
             foreach ($firstFileMembers as $firstFileMember) {
-                $firstRegDate = DateTime::createFromFormat('m-d-y',$firstFileMember[11]);
-                $secondRegDate = DateTime::createFromFormat('m-d-y',$secondFileMember[11]);
+                $firstRegDate = DateTime::createFromFormat('m-d-y', $firstFileMember[11]);
+                $secondRegDate = DateTime::createFromFormat('m-d-y', $secondFileMember[11]);
                 $firstFullname = $firstFileMember[1];
                 $secondFullname = $secondFileMember[1];
-                $firstBithday = DateTime::createFromFormat('m-d-y',$firstFileMember[2]);
-                $secondBithday = DateTime::createFromFormat('m-d-y',$secondFileMember[2]);
+                $firstBithday = DateTime::createFromFormat('m-d-y', $firstFileMember[2]);
+                $secondBithday = DateTime::createFromFormat('m-d-y', $secondFileMember[2]);
 
                 if ($firstRegDate->format("U") > $secondRegDate->format("U")) {
                     if ($firstFullname == $secondFullname) {
@@ -71,18 +71,12 @@ class IndexController extends Zend_Controller_Action
                             $changedOriginalData[] = $firstFileMember;
                             $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО и ДР равны';
                             $toKSA2Data[] = $firstFileMember;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U"))
-                                && ($firstBithday->format("d") == '01')
-                                && ($firstBithday->format("m") == '01')
-                                && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($firstBithday->format("d") == '01') && ($firstBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
                             $firstFileMember[2] = $secondFileMember[2];
                             $changedOriginalData[] = $firstFileMember;
                             $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО равны, ДР 01.01';
                             $toKSA2Data[] = $firstFileMember;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U"))
-                                && ($secondBithday->format("d") == '01')
-                                && ($secondBithday->format("m") == '01')
-                                && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($secondBithday->format("d") == '01') && ($secondBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
                             $changedOriginalData[] = $firstFileMember;
                             $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО равны, ДР 01.01';
                             $toKSA2Data[] = $firstFileMember;
@@ -100,20 +94,14 @@ class IndexController extends Zend_Controller_Action
                             $toKSA2Data[] = $firstFileMember;
                             $firstFileMember[13] = 'Уточнить ФИО';
                             $toUFMSData[] = $firstFileMember;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U"))
-                                && ($firstBithday->format("d") == '01')
-                                && ($firstBithday->format("m") == '01')
-                                && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($firstBithday->format("d") == '01') && ($firstBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
                             $firstFileMember[2] = $secondFileMember[2];
                             $changedOriginalData[] = $firstFileMember;
                             $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО не совпадают, ДР 01.01';
                             $toKSA2Data[] = $firstFileMember;
                             $firstFileMember[13] = 'Уточнить ФИО';
                             $toUFMSData[] = $firstFileMember;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U"))
-                                && ($secondBithday->format("d") == '01')
-                                && ($secondBithday->format("m") == '01')
-                                && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($secondBithday->format("d") == '01') && ($secondBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
                             $changedOriginalData[] = $firstFileMember;
                             $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО не совпадают, ДР 01.01';
                             $toKSA2Data[] = $firstFileMember;
@@ -127,15 +115,54 @@ class IndexController extends Zend_Controller_Action
                     }
                 } else if ($firstRegDate > $secondRegDate) {
                     if ($firstFullname == $secondFullname) {
-                        
+                        if ($firstBithday->format("U") == $secondBithday->format("U")) {
+                            $changedOriginalData[] = $firstFileMember;
+                            $firstFileMember[13] = 'УЕХАЛ';
+                            $toUFMSData[] = $firstFileMember;
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($firstBithday->format("d") == '01') && ($firstBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                            $firstFileMember[2] = $secondFileMember[2];
+                            $changedOriginalData[] = $firstFileMember;
+                            $firstFileMember[13] = 'УЕХАЛ. Уточнить ДР';
+                            $toUFMSData[] = $firstFileMember;
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($secondBithday->format("d") == '01') && ($secondBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                            $changedOriginalData[] = $firstFileMember;
+                            $firstFileMember[13] = 'УЕХАЛ. Уточнить ДР';
+                            $toUFMSData[] = $firstFileMember;
+                        } else {
+                            
+                        }
                     } else {
-                        
+                        if ($firstBithday->format("U") == $secondBithday->format("U")) {
+                            
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($firstBithday->format("d") == '01') && ($firstBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                            
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($secondBithday->format("d") == '01') && ($secondBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                            
+                        } else {
+                            
+                        }
                     }
                 } else if ($firstRegDate == $secondRegDate) {
                     if ($firstFullname == $secondFullname) {
-                        
+                        if ($firstBithday->format("U") == $secondBithday->format("U")) {
+                            
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($firstBithday->format("d") == '01') && ($firstBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                            
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($secondBithday->format("d") == '01') && ($secondBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                            
+                        } else {
+                            
+                        }
                     } else {
-                        
+                        if ($firstBithday->format("U") == $secondBithday->format("U")) {
+                            
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($firstBithday->format("d") == '01') && ($firstBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                            
+                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($secondBithday->format("d") == '01') && ($secondBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
+                            
+                        } else {
+                            
+                        }
                     }
                 }
             }
@@ -144,5 +171,6 @@ class IndexController extends Zend_Controller_Action
         $objWriter = new PHPExcel_Writer_Excel5($toUFMS);
         $objWriter->save('C:\xampp\tmp\123.xls');
     }
+
 }
 
