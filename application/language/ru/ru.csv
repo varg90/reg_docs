@@ -1,3 +1,7 @@
 first_file; "Первый файл"
 second_file; "Второй файл"
 submit; "OK"
+changed_original; "Измененный оригинал"
+to_ufms; "В УФМС"
+to_ksa2; "В КСА2"
+back; "Назад"

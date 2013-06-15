@@ -1,0 +1,14 @@
+<html>
+    <body>
+        <div style="display: table; margin: 0 auto;">
+            <a href='<?= $this->filesPath . 'changed_original.xls'?>'><?= $this->translate('changed_original')?></a><br>
+            <a href='<?= $this->filesPath . 'to_ufms.xls'?>'><?= $this->translate('to_ufms')?></a><br>
+            <a href='<?= $this->filesPath . 'to_ksa2.xls'?>'><?= $this->translate('to_ksa2')?></a><br><br>
+            <a href='<?= $this->url(array(
+                'action' => 'index',
+                'controller' => 'index',
+                'module' => null,
+            ))?>'><?= $this->translate('back')?></a><br>
+        </div>
+    </body>
+</html>
