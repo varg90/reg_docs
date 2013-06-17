@@ -3,6 +3,10 @@
 class IndexController extends Zend_Controller_Action
 {
 
+    protected $_toKSA2Data = array();
+    protected $_changedOriginalData = array();
+    protected $_toUFMSData = array();
+
     public function init()
     {
         /* Initialize action controller here */
@@ -23,6 +27,7 @@ class IndexController extends Zend_Controller_Action
             $secondFileMembers = $this->_getMembers($secondFileData);
 
             $this->_compareMembers($firstFileMembers, $secondFileMembers);
+            $this->_saveNewFiles();
         }
     }
 
@@ -40,195 +45,272 @@ class IndexController extends Zend_Controller_Action
 
     private function _compareMembers($firstFileMembers, $secondFileMembers)
     {
-        $changedOriginal = new PHPExcel();
-        $changedOriginal->setActiveSheetIndex(0);
-        $changedOriginalSheet = $changedOriginal->getActiveSheet();
-        $changedOriginalSheet->getColumnDimension('b')->setWidth('30');
-        $changedOriginalData = array();
-
-        $toKSA2 = new PHPExcel();
-        $toKSA2->setActiveSheetIndex(0);
-        $toKSA2Sheet = $toKSA2->getActiveSheet();
-        $toKSA2Data = array();
-
-        $toUFMS = new PHPExcel();
-        $toUFMS->setActiveSheetIndex(0);
-        $toUFMSSheet = $toUFMS->getActiveSheet();
-        $toUFMSData = array();
-
         foreach ($firstFileMembers as $firstFileMember) {
             foreach ($secondFileMembers as $secondFileMember) {
-                $firstRegDate = DateTime::createFromFormat('m-d-y', $firstFileMember[11]);
-                $secondRegDate = DateTime::createFromFormat('m-d-y', $secondFileMember[11]);
-                $firstFullname = $firstFileMember[1];
-                $secondFullname = $secondFileMember[1];
-                $firstBithday = DateTime::createFromFormat('m-d-y', $firstFileMember[2]);
-                $secondBithday = DateTime::createFromFormat('m-d-y', $secondFileMember[2]);
-
-                if ($firstRegDate->format("U") > $secondRegDate->format("U")) {
-                    if ($firstFullname == $secondFullname) {
-                        if ($firstBithday->format("U") == $secondBithday->format("U")) {
-                            $changedOriginalData[] = $firstFileMember;
-                            $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО и ДР равны';
-                            $toKSA2Data[] = $firstFileMember;
-                            break 1;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($firstBithday->format("d") == '01') && ($firstBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
-                            $firstFileMember[2] = $secondFileMember[2];
-                            $changedOriginalData[] = $firstFileMember;
-                            $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО равны, ДР 01.01';
-                            $toKSA2Data[] = $firstFileMember;
-                            break 1;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($secondBithday->format("d") == '01') && ($secondBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
-                            $changedOriginalData[] = $firstFileMember;
-                            $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО равны, ДР 01.01';
-                            $toKSA2Data[] = $firstFileMember;
-                            break 1;
-                        } else {
-                            $changedOriginalData[] = $firstFileMember;
-                            $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО равны, ДР не совпадают';
-                            $toKSA2Data[] = $firstFileMember;
-                            $firstFileMember[13] = 'Уточнить ДР';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        }
-                    } else {
-                        if ($firstBithday->format("U") == $secondBithday->format("U")) {
-                            $changedOriginalData[] = $firstFileMember;
-                            $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО не совпадают, ДР равны';
-                            $toKSA2Data[] = $firstFileMember;
-                            $firstFileMember[13] = 'Уточнить ФИО';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($firstBithday->format("d") == '01') && ($firstBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
-                            $firstFileMember[2] = $secondFileMember[2];
-                            $changedOriginalData[] = $firstFileMember;
-                            $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО не совпадают, ДР 01.01';
-                            $toKSA2Data[] = $firstFileMember;
-                            $firstFileMember[13] = 'Уточнить ФИО';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($secondBithday->format("d") == '01') && ($secondBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
-                            $changedOriginalData[] = $firstFileMember;
-                            $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО не совпадают, ДР 01.01';
-                            $toKSA2Data[] = $firstFileMember;
-                            $firstFileMember[13] = 'Уточнить ФИО';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        } else {
-                            $changedOriginalData[] = $firstFileMember;
-                            $firstFileMember[13] = 'Уточнить';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        }
-                    }
-                } else if ($firstRegDate->format("U") < $secondRegDate->format("U")) {
-                    if ($firstFullname == $secondFullname) {
-                        if ($firstBithday->format("U") == $secondBithday->format("U")) {
-                            $changedOriginalData[] = $firstFileMember;
-                            $firstFileMember[13] = 'УЕХАЛ';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($firstBithday->format("d") == '01') && ($firstBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
-                            $firstFileMember[2] = $secondFileMember[2];
-                            $changedOriginalData[] = $firstFileMember;
-                            $firstFileMember[13] = 'УЕХАЛ. Уточнить ДР';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($secondBithday->format("d") == '01') && ($secondBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
-                            $changedOriginalData[] = $firstFileMember;
-                            $firstFileMember[13] = 'УЕХАЛ. Уточнить ДР';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        } else {
-                            
-                        }
-                    } else {
-                        if ($firstBithday->format("U") == $secondBithday->format("U")) {
-                            $firstFileMember[13] = 'Уточнить ФИО';
-                            $toUFMSData[] = $firstFileMember;
-                            $firstFileMember[13] = 'УЕХАЛ';
-                            $changedOriginalData[] = $firstFileMember;
-                            break 1;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($firstBithday->format("d") == '01') && ($firstBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
-                            $firstFileMember[13] = 'Уточнить ФИО';
-                            $toUFMSData[] = $firstFileMember;
-                            $firstFileMember[2] = $secondFileMember[2];
-                            $firstFileMember[13] = 'УЕХАЛ. Уточнить ДР';
-                            $changedOriginalData[] = $firstFileMember;
-                            break 1;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($secondBithday->format("d") == '01') && ($secondBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
-                            $firstFileMember[13] = 'Уточнить ФИО';
-                            $toUFMSData[] = $firstFileMember;
-                            $firstFileMember[13] = 'УЕХАЛ. Уточнить ДР';
-                            $changedOriginalData[] = $firstFileMember;
-                            break 1;
-                        } else {
-                            $firstFileMember[13] = 'Уточнить';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        }
-                    }
-                } else if ($firstRegDate->format("U") == $secondRegDate->format("U")) {
-                    if ($firstFullname == $secondFullname) {
-                        if ($firstBithday->format("U") == $secondBithday->format("U")) {
-                            $firstFileMember[13] = 'Уточнить';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($firstBithday->format("d") == '01') && ($firstBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
-                            $firstFileMember[13] = 'Уточнить';
-                            $firstFileMember[2] = $secondFileMember[2];
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($secondBithday->format("d") == '01') && ($secondBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
-                            $firstFileMember[13] = 'Уточнить';
-                            $toUFMSData[] = $firstFileMember;
-                            $firstFileMember[13] = 'Исправить ДР';
-                            $toKSA2Data = $firstFileMember;
-                            break 1;
-                        } else {
-                            $firstFileMember[13] = 'Уточнить';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        }
-                    } else {
-                        if ($firstBithday->format("U") == $secondBithday->format("U")) {
-                            $firstFileMember[13] = 'Уточнить';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($firstBithday->format("d") == '01') && ($firstBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
-                            $firstFileMember[13] = 'Уточнить';
-                            $firstFileMember[2] = $secondFileMember[2];
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        } else if (($firstBithday->format("U") != $secondBithday->format("U")) && ($secondBithday->format("d") == '01') && ($secondBithday->format("m") == '01') && ($firstBithday->format("Y") == $secondBithday->format("Y"))) {
-                            $firstFileMember[13] = 'Уточнить';
-                            $toUFMSData[] = $firstFileMember;
-                            $firstFileMember[13] = 'Исправить ДР';
-                            $toKSA2Data = $firstFileMember;
-                            break 1;
-                        } else {
-                            $firstFileMember[13] = 'Уточнить';
-                            $toUFMSData[] = $firstFileMember;
-                            break 1;
-                        }
+                if ($firstFileMember[8] == $secondFileMember[8]) {
+                    if (DateTime::createFromFormat('m-d-y', $firstFileMember[11])->format("U")
+                            > DateTime::createFromFormat('m-d-y',
+                                    $secondFileMember[11])->format("U")) {
+                        $this->_firstDateGreaterThanSecond($firstFileMember,
+                                $secondFileMember);
+                    } else if (DateTime::createFromFormat('m-d-y',
+                                    $firstFileMember[11])->format("U") == DateTime::createFromFormat('m-d-y',
+                                    $secondFileMember[11])->format("U")) {
+                        $this->_datesEqual($firstFileMember, $secondFileMember);
+                    } else if
+                    (DateTime::createFromFormat('m-d-y', $firstFileMember[11])->format("U")
+                            < DateTime::createFromFormat('m-d-y',
+                                    $secondFileMember[11])->format("U")) {
+                        $this->_firstDateLessThanSecond($firstFileMember,
+                                $secondFileMember);
                     }
                 }
             }
         }
+    }
+
+    private function _firstDateGreaterThanSecond($firstFileMember,
+            $secondFileMember)
+    {
+        if ($firstFileMember[1] == $secondFileMember[1]) {
+            if (DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    == DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U")) {
+                $this->_changedOriginalData[] = $firstFileMember;
+                $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО и ДР равны';
+                $this->_toKSA2Data[] = $firstFileMember;
+            } else if ((DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    != DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U"))
+                    && (DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("d")
+                    == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("m") == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("Y") == DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("Y"))) {
+                $firstFileMember[2] = $secondFileMember[2];
+                $this->_changedOriginalData[] = $firstFileMember;
+                $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО равны, ДР 01.01';
+                $this->_toKSA2Data[] = $firstFileMember;
+            } else if ((DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    != DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U"))
+                    && (DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("d")
+                    == '01') && (DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("m") == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("Y") == DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("Y"))) {
+                $this->_changedOriginalData[] = $firstFileMember;
+                $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО равны, ДР 01.01';
+                $this->_toKSA2Data[] = $firstFileMember;
+            } else {
+                $this->_changedOriginalData[] = $firstFileMember;
+                $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО равны, ДР не совпадают';
+                $this->_toKSA2Data[] = $firstFileMember;
+                $firstFileMember[13] = 'Уточнить ДР';
+                $this->_toUFMSData[] = $firstFileMember;
+            }
+        } else {
+            if (DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    == DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U")) {
+                $this->_changedOriginalData[] = $firstFileMember;
+                $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО не совпадают, ДР равны';
+                $this->_toKSA2Data[] = $firstFileMember;
+                $firstFileMember[13] = 'Уточнить ФИО';
+                $this->_toUFMSData[] = $firstFileMember;
+            } else if ((DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    != DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U"))
+                    && (DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("d")
+                    == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("m") == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("Y") == DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("Y"))) {
+                $firstFileMember[2] = $secondFileMember[2];
+                $this->_changedOriginalData[] = $firstFileMember;
+                $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО не совпадают, ДР 01.01';
+                $this->_toKSA2Data[] = $firstFileMember;
+                $firstFileMember[13] = 'Уточнить ФИО';
+                $this->_toUFMSData[] = $firstFileMember;
+            } else if ((DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    != DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U"))
+                    && (DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("d")
+                    == '01') && (DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("m") == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("Y") == DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("Y"))) {
+                $this->_changedOriginalData[] = $firstFileMember;
+                $firstFileMember[13] = 'Удалить. Дата 1 > Дата 2, ФИО не совпадают, ДР 01.01';
+                $this->_toKSA2Data[] = $firstFileMember;
+                $firstFileMember[13] = 'Уточнить ФИО';
+                $this->_toUFMSData[] = $firstFileMember;
+            } else {
+                $this->_changedOriginalData[] = $firstFileMember;
+                $firstFileMember[13] = 'Уточнить';
+                $this->_toUFMSData[] = $firstFileMember;
+            }
+        }
+    }
+
+    private function _datesEqual($firstFileMember, $secondFileMember)
+    {
+        if ($firstFileMember[1] == $secondFileMember[1]) {
+            if (DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    == DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U")) {
+                $firstFileMember[13] = 'Уточнить';
+                $this->_toUFMSData[] = $firstFileMember;
+            } else if ((DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    != DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U"))
+                    && (DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("d")
+                    == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("m") == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("Y") == DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("Y"))) {
+                $firstFileMember[13] = 'Уточнить';
+                $firstFileMember[2] = $secondFileMember[2];
+                $this->_toUFMSData[] = $firstFileMember;
+            } else if ((DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    != DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U"))
+                    && (DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("d")
+                    == '01') && (DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("m") == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("Y") == DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("Y"))) {
+                $firstFileMember[13] = 'Уточнить';
+                $this->_toUFMSData[] = $firstFileMember;
+                $firstFileMember[13] = 'Исправить ДР';
+                $this->_toKSA2Data = $firstFileMember;
+            } else {
+                $firstFileMember[13] = 'Уточнить';
+                $this->_toUFMSData[] = $firstFileMember;
+            }
+        } else {
+            if (DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    == DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U")) {
+                $firstFileMember[13] = 'Уточнить';
+                $this->_toUFMSData[] = $firstFileMember;
+            } else if ((DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    != DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U"))
+                    && (DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("d")
+                    == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("m") == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("Y") == DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("Y"))) {
+                $firstFileMember[13] = 'Уточнить';
+                $firstFileMember[2] = $secondFileMember[2];
+                $this->_toUFMSData[] = $firstFileMember;
+            } else if ((DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    != DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U"))
+                    && (DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("d")
+                    == '01') && (DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("m") == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("Y") == DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("Y"))) {
+                $firstFileMember[13] = 'Уточнить';
+                $this->_toUFMSData[] = $firstFileMember;
+                $firstFileMember[13] = 'Исправить ДР';
+                $this->_toKSA2Data = $firstFileMember;
+            } else {
+                $firstFileMember[13] = 'Уточнить';
+                $this->_toUFMSData[] = $firstFileMember;
+            }
+        }
+    }
+
+    private function _firstDateLessThanSecond($firstFileMember,
+            $secondFileMember)
+    {
+        if ($firstFileMember[1] == $secondFileMember[1]) {
+            if (DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    == DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U")) {
+                $this->_changedOriginalData[] = $firstFileMember;
+                $firstFileMember[13] = 'УЕХАЛ';
+                $this->_toUFMSData[] = $firstFileMember;
+            } else if ((DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    != DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U"))
+                    && (DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("d")
+                    == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("m") == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("Y") == DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("Y"))) {
+                $firstFileMember[2] = $secondFileMember[2];
+                $this->_changedOriginalData[] = $firstFileMember;
+                $firstFileMember[13] = 'УЕХАЛ. Уточнить ДР';
+                $this->_toUFMSData[] = $firstFileMember;
+            } else if ((DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    != DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U"))
+                    && (DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("d")
+                    == '01') && (DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("m") == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("Y") == DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("Y"))) {
+                $this->_changedOriginalData[] = $firstFileMember;
+                $firstFileMember[13] = 'УЕХАЛ. Уточнить ДР';
+                $this->_toUFMSData[] = $firstFileMember;
+            } else {
+                
+            }
+        } else {
+            if (DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    == DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U")) {
+                $firstFileMember[13] = 'Уточнить ФИО';
+                $this->_toUFMSData[] = $firstFileMember;
+                $firstFileMember[13] = 'УЕХАЛ';
+                $this->_changedOriginalData[] = $firstFileMember;
+            } else if ((DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    != DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U"))
+                    && (DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("d")
+                    == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("m") == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("Y") == DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("Y"))) {
+                $firstFileMember[13] = 'Уточнить ФИО';
+                $this->_toUFMSData[] = $firstFileMember;
+                $firstFileMember[2] = $secondFileMember[2];
+                $firstFileMember[13] = 'УЕХАЛ. Уточнить ДР';
+                $this->_changedOriginalData[] = $firstFileMember;
+            } else if ((DateTime::createFromFormat('m-d-y', $firstFileMember[2])->format("U")
+                    != DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("U"))
+                    && (DateTime::createFromFormat('m-d-y', $secondFileMember[2])->format("d")
+                    == '01') && (DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("m") == '01') && (DateTime::createFromFormat('m-d-y',
+                            $firstFileMember[2])->format("Y") == DateTime::createFromFormat('m-d-y',
+                            $secondFileMember[2])->format("Y"))) {
+                $firstFileMember[13] = 'Уточнить ФИО';
+                $this->_toUFMSData[] = $firstFileMember;
+                $firstFileMember[13] = 'УЕХАЛ. Уточнить ДР';
+                $this->_changedOriginalData[] = $firstFileMember;
+            } else {
+                $firstFileMember[13] = 'Уточнить';
+                $this->_toUFMSData[] = $firstFileMember;
+            }
+        }
+    }
+
+    private function _saveNewFiles()
+    {
+        $changedOriginal = new PHPExcel();
+        $changedOriginal->setActiveSheetIndex(0);
+        $changedOriginalSheet = $changedOriginal->getActiveSheet();
+        $changedOriginalSheet->getColumnDimension('b')->setWidth('30');
+
+        $toKSA2 = new PHPExcel();
+        $toKSA2->setActiveSheetIndex(0);
+        $toKSA2Sheet = $toKSA2->getActiveSheet();
+
+        $toUFMS = new PHPExcel();
+        $toUFMS->setActiveSheetIndex(0);
+        $toUFMSSheet = $toUFMS->getActiveSheet();
+
         $filesPath = realpath($this->view->baseUrl() . '/files/');
 
-        $changedOriginalSheet->fromArray($changedOriginalData);
+        $changedOriginalSheet->fromArray($this->_changedOriginalData);
         $originalObjWriter = new PHPExcel_Writer_Excel5($changedOriginal);
         $changedOriginalFilePath = $filesPath . 'changed_original.xls';
         $originalObjWriter->save($changedOriginalFilePath);
 
-        $toKSA2Sheet->fromArray($toKSA2Data);
+        $toKSA2Sheet->fromArray($this->_toKSA2Data);
         $KSA2ObjWriter = new PHPExcel_Writer_Excel5($toKSA2);
         $KSA2FilePath = $filesPath . 'to_ksa2.xls';
         $KSA2ObjWriter->save($KSA2FilePath);
 
-        $toKSA2Sheet->fromArray($toKSA2Data);
-        $UFMSObjWriter = new PHPExcel_Writer_Excel5($toKSA2);
+        $toUFMSSheet->fromArray($this->_toUFMSData);
+        $UFMSObjWriter = new PHPExcel_Writer_Excel5($toUFMS);
         $UFMSFilePath = $filesPath . 'to_ufms.xls';
         $UFMSObjWriter->save($UFMSFilePath);
 
@@ -243,10 +325,12 @@ class IndexController extends Zend_Controller_Action
         $this->getResponse()
                 ->setHttpResponseCode(200)
                 ->setHeader('Pragma', 'public', true)
-                ->setHeader('Cache-Control', 'must-revalidate, post-check=0, pre-check=0', true)
+                ->setHeader('Cache-Control',
+                        'must-revalidate, post-check=0, pre-check=0', true)
                 ->setHeader('Content-type', 'application/octet-stream', true)
                 ->setHeader('Content-Length', filesize($fileFullName))
-                ->setHeader('Content-Disposition', 'attachment; filename=' . $fileName)
+                ->setHeader('Content-Disposition',
+                        'attachment; filename=' . $fileName)
                 ->clearBody();
         $this->getResponse()
                 ->sendHeaders();
